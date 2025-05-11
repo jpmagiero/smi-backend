@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
   IsArray,
   ValidateNested,
-  ArrayMinSize,
+  IsOptional,
 } from 'class-validator';
 import { DemandStatus } from '../../entities/demand/demand.entity';
 import { CreateDemandItemDto } from './create-demand-item.dto';
@@ -42,10 +42,11 @@ export class CreateDemandDto {
   @ApiProperty({
     description: 'List of demand items',
     type: [CreateDemandItemDto],
+    required: false,
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @ArrayMinSize(1)
   @Type(() => CreateDemandItemDto)
-  items: CreateDemandItemDto[];
+  items?: CreateDemandItemDto[];
 }
