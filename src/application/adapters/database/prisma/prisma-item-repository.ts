@@ -24,6 +24,19 @@ export class PrismaItemRepository extends ItemRepository {
     });
   }
 
+  async findAll(): Promise<Item[]> {
+    const items = await this.prisma.item.findMany();
+
+    return items.map(
+      (item) =>
+        new Item({
+          sku: item.sku,
+          description: item.description,
+          id: item.id,
+        }),
+    );
+  }
+
   async findByDemandId(demandId: number): Promise<Item[]> {
     const demandItems = await this.prisma.demandItem.findMany({
       where: { demandId },

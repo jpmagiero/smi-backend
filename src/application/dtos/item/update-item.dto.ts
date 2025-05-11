@@ -3,8 +3,8 @@ import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateItemDto {
   @ApiProperty({
-    description: 'SKU do item',
-    example: 'SKU123',
+    description: 'SKU of the item',
+    example: 'SKU12345',
     required: false,
   })
   @IsOptional()
@@ -12,8 +12,8 @@ export class UpdateItemDto {
   sku?: string;
 
   @ApiProperty({
-    description: 'Descrição do item',
-    example: 'Caneta Azul',
+    description: 'Description of the item',
+    example: 'Product description',
     required: false,
   })
   @IsOptional()
