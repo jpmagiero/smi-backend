@@ -11,12 +11,15 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CreateDemandDto } from '../../dtos/demand/create-demand.dto';
 import { UpdateDemandDto } from '../../dtos/demand/update-demand.dto';
+import { AddItemsToDemandDto } from '../../dtos/demand/add-items-to-demand.dto';
 import { Demand } from '../../entities/demand/demand.entity';
 import { CreateDemandUseCase } from '../../use-cases/demand/create-demand.use-case';
 import { DeleteDemandUseCase } from '../../use-cases/demand/delete-demand.use-case';
 import { GetAllDemandsUseCase } from '../../use-cases/demand/get-all-demands.use-case';
 import { GetDemandByIdUseCase } from '../../use-cases/demand/get-demand-by-id.use-case';
 import { UpdateDemandUseCase } from '../../use-cases/demand/update-demand.use-case';
+import { AddItemsToDemandUseCase } from '../../use-cases/demand/add-items-to-demand.use-case';
+import { RemoveItemFromDemandUseCase } from '../../use-cases/demand/remove-item-from-demand.use-case';
 
 @ApiTags('demands')
 @Controller('demands')
@@ -27,6 +30,8 @@ export class DemandsController {
     private readonly getDemandByIdUseCase: GetDemandByIdUseCase,
     private readonly updateDemandUseCase: UpdateDemandUseCase,
     private readonly deleteDemandUseCase: DeleteDemandUseCase,
+    private readonly addItemsToDemandUseCase: AddItemsToDemandUseCase,
+    private readonly removeItemFromDemandUseCase: RemoveItemFromDemandUseCase,
   ) {}
 
   @Post()
@@ -53,7 +58,11 @@ export class DemandsController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a demand' })
+  @ApiOperation({
+    summary: 'Atualizar uma demanda',
+    description:
+      'Atualiza apenas os dados básicos da demanda (startDate, endDate, status). Para gerenciar itens, utilize os endpoints específicos.',
+  })
   @ApiParam({ name: 'id', description: 'Demand ID' })
   @ApiResponse({ status: 200, description: 'Demand updated successfully' })
   @ApiResponse({ status: 404, description: 'Demand not found' })
@@ -71,5 +80,38 @@ export class DemandsController {
   @ApiResponse({ status: 404, description: 'Demand not found' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.deleteDemandUseCase.execute(id);
+  }
+
+  @Post(':id/items')
+  @ApiOperation({
+    summary: 'Adicionar itens a uma demanda existente',
+    description:
+      'Permite adicionar novos itens à demanda sem alterar os itens existentes',
+  })
+  @ApiParam({ name: 'id', description: 'ID da demanda' })
+  @ApiResponse({ status: 200, description: 'Itens adicionados com sucesso' })
+  @ApiResponse({ status: 404, description: 'Demanda não encontrada' })
+  @ApiResponse({ status: 400, description: 'Itens inválidos ou inexistentes' })
+  async addItems(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() addItemsDto: AddItemsToDemandDto,
+  ): Promise<Demand> {
+    return this.addItemsToDemandUseCase.execute(id, addItemsDto);
+  }
+
+  @Delete(':demandId/items/:itemId')
+  @ApiOperation({
+    summary: 'Remover um item específico de uma demanda',
+    description: 'Remove apenas o item especificado da demanda',
+  })
+  @ApiParam({ name: 'demandId', description: 'ID da demanda' })
+  @ApiParam({ name: 'itemId', description: 'ID do item a ser removido' })
+  @ApiResponse({ status: 200, description: 'Item removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Demanda ou item não encontrado' })
+  async removeItem(
+    @Param('demandId', ParseIntPipe) demandId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+  ): Promise<Demand> {
+    return this.removeItemFromDemandUseCase.execute(demandId, itemId);
   }
 }

@@ -1,14 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsDate,
-  IsEnum,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-} from 'class-validator';
+import { IsDate, IsEnum, IsOptional } from 'class-validator';
 import { DemandStatus } from '../../entities/demand/demand.entity';
-import { UpdateDemandItemDto } from './update-demand-item.dto';
 
 export class UpdateDemandDto {
   @ApiProperty({
@@ -40,15 +33,4 @@ export class UpdateDemandDto {
   @IsOptional()
   @IsEnum(DemandStatus)
   status?: DemandStatus;
-
-  @ApiProperty({
-    description: 'List of demand items',
-    type: [UpdateDemandItemDto],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateDemandItemDto)
-  items?: UpdateDemandItemDto[];
 }

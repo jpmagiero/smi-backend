@@ -7,6 +7,8 @@ import { GetAllDemandsUseCase } from './application/use-cases/demand/get-all-dem
 import { GetDemandByIdUseCase } from './application/use-cases/demand/get-demand-by-id.use-case';
 import { UpdateDemandUseCase } from './application/use-cases/demand/update-demand.use-case';
 import { DeleteDemandUseCase } from './application/use-cases/demand/delete-demand.use-case';
+import { AddItemsToDemandUseCase } from './application/use-cases/demand/add-items-to-demand.use-case';
+import { RemoveItemFromDemandUseCase } from './application/use-cases/demand/remove-item-from-demand.use-case';
 import { CreateItemUseCase } from './application/use-cases/item/create-item.use-case';
 import { GetAllItemsUseCase } from './application/use-cases/item/get-all-items.use-case';
 import { GetItemByIdUseCase } from './application/use-cases/item/get-item-by-id.use-case';
@@ -30,6 +32,8 @@ import { DemandItemRepository } from './application/repositories/demand/demand-i
     GetDemandByIdUseCase,
     UpdateDemandUseCase,
     DeleteDemandUseCase,
+    AddItemsToDemandUseCase,
+    RemoveItemFromDemandUseCase,
     // Item use cases
     CreateItemUseCase,
     GetAllItemsUseCase,
