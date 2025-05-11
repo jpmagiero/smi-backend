@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Demand } from '../entities/demand.entity';
-import { DemandRepository } from '../repositories/demand-repository';
+import { DemandRepository } from '../../repositories/demand/demand-repository';
+import { Demand } from '../../entities/demand/demand.entity';
 
 @Injectable()
 export class GetAllDemandsUseCase {

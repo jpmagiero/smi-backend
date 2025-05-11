@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Demand } from '../entities/demand.entity';
-import { DemandRepository } from '../repositories/demand-repository';
-import { CreateDemandDto } from '../dtos/create-demand.dto';
-import { DemandItem } from '../entities/demand-item.entity';
+import { Demand } from '../../entities/demand/demand.entity';
+import { DemandRepository } from '../../repositories/demand/demand-repository';
+import { CreateDemandDto } from '../../dtos/demand/create-demand.dto';
+import { DemandItem } from '../../entities/demand/demand-item.entity';
 
 @Injectable()
 export class CreateDemandUseCase {
@@ -16,7 +16,7 @@ export class CreateDemandUseCase {
       items: createDemandDto.items.map(
         (itemDto) =>
           new DemandItem({
-            sku: itemDto.sku,
+            itemId: itemDto.itemId,
             totalPlan: itemDto.totalPlan,
             demandId: 0,
           }),

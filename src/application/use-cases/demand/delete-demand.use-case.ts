@@ -1,5 +1,5 @@
+import { DemandRepository } from '../../repositories/demand/demand-repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DemandRepository } from '../repositories/demand-repository';
 
 @Injectable()
 export class DeleteDemandUseCase {

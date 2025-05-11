@@ -8,7 +8,7 @@ import {
   ValidateNested,
   ArrayMinSize,
 } from 'class-validator';
-import { DemandStatus } from '../entities/demand.entity';
+import { DemandStatus } from '../../entities/demand/demand.entity';
 import { CreateDemandItemDto } from './create-demand-item.dto';
 
 export class CreateDemandDto {

@@ -9,14 +9,14 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { CreateDemandDto } from '../../dtos/create-demand.dto';
-import { UpdateDemandDto } from '../../dtos/update-demand.dto';
-import { CreateDemandUseCase } from '../../use-cases/create-demand.use-case';
-import { GetAllDemandsUseCase } from '../../use-cases/get-all-demands.use-case';
-import { GetDemandByIdUseCase } from '../../use-cases/get-demand-by-id.use-case';
-import { UpdateDemandUseCase } from '../../use-cases/update-demand.use-case';
-import { DeleteDemandUseCase } from '../../use-cases/delete-demand.use-case';
-import { Demand } from '../../entities/demand.entity';
+import { CreateDemandDto } from '../../dtos/demand/create-demand.dto';
+import { UpdateDemandDto } from '../../dtos/demand/update-demand.dto';
+import { Demand } from '../../entities/demand/demand.entity';
+import { CreateDemandUseCase } from '../../use-cases/demand/create-demand.use-case';
+import { DeleteDemandUseCase } from '../../use-cases/demand/delete-demand.use-case';
+import { GetAllDemandsUseCase } from '../../use-cases/demand/get-all-demands.use-case';
+import { GetDemandByIdUseCase } from '../../use-cases/demand/get-demand-by-id.use-case';
+import { UpdateDemandUseCase } from '../../use-cases/demand/update-demand.use-case';
 
 @ApiTags('demands')
 @Controller('demands')

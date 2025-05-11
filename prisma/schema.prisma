@@ -8,22 +8,33 @@ datasource db {
 }
 
 model Demand {
-  id         Int           @id @default(autoincrement())
-  startDate DateTime
-  endDate   DateTime
-  status      DemandaStatus
-  itens       DemandItem[]
+  id         Int   @id @default(autoincrement())
+  startDate  DateTime
+  endDate    DateTime
+  status     DemandStatus
+  items      DemandItem[]
+}
+
+model Item {
+  id          Int     @id @default(autoincrement())
+  sku         String  @unique
+  description String
+  demandItems DemandItem[]
 }
 
 model DemandItem {
-  id        Int    @id @default(autoincrement())
-  sku       String
-  totalPlan Int
-  demandId Int
-  demand   Demand @relation(fields: [demandId], references: [id])
+  id         Int     @id @default(autoincrement())
+  demandId   Int
+  itemId     Int
+  totalPlan  Int
+
+  demand     Demand  @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  item       Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([demandId, itemId])
 }
 
-enum DemandaStatus {
+enum DemandStatus {
   PLANNING
   IN_PROGRESS
   COMPLETED

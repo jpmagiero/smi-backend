@@ -1,20 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class UpdateDemandItemDto {
-  @ApiProperty({ description: 'ID of the item', example: 1, required: false })
+  @ApiProperty({
+    description: 'ID of the item relation',
+    example: 1,
+    required: false,
+  })
   @IsOptional()
   @IsNumber()
   id?: number;
 
   @ApiProperty({
-    description: 'SKU of the item',
-    example: 'SKU123',
+    description: 'Item ID',
+    example: 1,
     required: false,
   })
   @IsOptional()
-  @IsString()
-  sku?: string;
+  @IsNumber()
+  itemId?: number;
 
   @ApiProperty({
     description: 'Total plan for the item',

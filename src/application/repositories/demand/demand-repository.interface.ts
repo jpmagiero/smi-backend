@@ -1,4 +1,4 @@
-import { Demand } from '../entities/demand.entity';
+import { Demand } from '../../entities/demand/demand.entity';
 
 export abstract class DemandRepository {
   abstract create(demand: Demand): Promise<Demand>;

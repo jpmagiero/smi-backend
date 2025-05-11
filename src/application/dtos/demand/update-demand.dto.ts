@@ -7,7 +7,7 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { DemandStatus } from '../entities/demand.entity';
+import { DemandStatus } from '../../entities/demand/demand.entity';
 import { UpdateDemandItemDto } from './update-demand-item.dto';
 
 export class UpdateDemandDto {
