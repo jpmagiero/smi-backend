@@ -24,7 +24,7 @@ model DemandItem {
 }
 
 enum DemandaStatus {
-  PLANEJAMENTO
-  EM_ANDAMENTO
-  CONCLUIDO
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
 }
