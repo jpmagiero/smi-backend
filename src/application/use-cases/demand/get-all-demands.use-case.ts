@@ -1,16 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { DemandRepository } from '../../repositories/demand/demand-repository';
 import { calculateDemandStatus } from '../../utils/demand-status.util';
-import { DemandSummary } from '../../entities/demand/demand.interface';
+import {
+  DemandSummary,
+  PaginatedResult,
+} from '../../entities/demand/demand.interface';
 
 @Injectable()
 export class GetAllDemandsUseCase {
   constructor(private readonly demandRepository: DemandRepository) {}
 
-  async execute(): Promise<DemandSummary[]> {
-    const demands = await this.demandRepository.findAll();
+  async execute(
+    cursor?: string,
+    limit?: number,
+  ): Promise<PaginatedResult<DemandSummary>> {
+    const result = await this.demandRepository.findAll(cursor, limit);
 
-    return demands.map((demand) => {
+    const data = result.data.map((demand) => {
       const totalPlan = demand.totalPlan;
       const totalProd = demand.totalProd;
 
@@ -23,5 +29,10 @@ export class GetAllDemandsUseCase {
         status: calculateDemandStatus(totalPlan, totalProd),
       };
     });
+
+    return {
+      data,
+      meta: result.meta,
+    };
   }
 }

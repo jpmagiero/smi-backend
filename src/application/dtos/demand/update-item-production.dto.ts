@@ -3,7 +3,7 @@ import { IsNumber, Min, IsOptional } from 'class-validator';
 
 export class UpdateDemandItemDto {
   @ApiProperty({
-    description: 'Quantidade total planejada do item',
+    description: 'Total planned quantity of the item',
     example: 100,
     required: false,
   })
@@ -13,7 +13,7 @@ export class UpdateDemandItemDto {
   totalPlan?: number;
 
   @ApiProperty({
-    description: 'Quantidade total produzida do item',
+    description: 'Total produced quantity of the item',
     example: 50,
     required: false,
   })

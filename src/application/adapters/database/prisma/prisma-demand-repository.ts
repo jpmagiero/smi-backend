@@ -5,6 +5,31 @@ import { Demand, DemandStatus } from '../../../entities/demand/demand.entity';
 import { DemandItem } from '../../../entities/demand/demand-item.entity';
 import { Item } from '../../../entities/item.entity';
 import { calculateDemandStatus } from '../../../utils/demand-status.util';
+import { PaginatedResult } from '../../../entities/demand/demand.interface';
+import { Prisma } from '@prisma/client';
+
+interface PrismaItemWithRelations {
+  id: number;
+  sku: string;
+  description: string;
+}
+
+interface PrismaDemandItemWithRelations {
+  id: number;
+  demandId: number;
+  itemId: number;
+  totalPlan: number;
+  totalProduced: number;
+  item: PrismaItemWithRelations | null;
+}
+
+interface PrismaDemandWithRelations {
+  id: number;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  items: PrismaDemandItemWithRelations[];
+}
 
 @Injectable()
 export class PrismaDemandRepository extends DemandRepository {
@@ -35,54 +60,16 @@ export class PrismaDemandRepository extends DemandRepository {
         }
       }
 
-      const demandWithItems = await prisma.demand.findUnique({
-        where: { id: createdDemand.id },
-        include: {
-          items: {
-            include: {
-              item: true,
-            },
-          },
-        },
-      });
-
-      if (!demandWithItems) {
-        throw new Error(
-          `Failed to retrieve demand with ID ${createdDemand.id}`,
-        );
-      }
-
-      const items = demandWithItems.items.map(
-        (item) =>
-          new DemandItem({
-            id: item.id,
-            demandId: item.demandId,
-            itemId: item.itemId,
-            totalPlan: item.totalPlan,
-            totalProduced: Number(item.totalProduced || 0),
-            item: item.item
-              ? new Item({
-                  id: item.item.id,
-                  sku: item.item.sku,
-                  description: item.item.description,
-                })
-              : undefined,
-          }),
-      );
-
-      return new Demand({
-        id: demandWithItems.id,
-        startDate: demandWithItems.startDate,
-        endDate: demandWithItems.endDate,
-        items,
-      });
+      return this.findById(createdDemand.id);
     });
 
-    return result;
+    return result as Demand;
   }
 
-  async findAll(): Promise<Demand[]> {
-    const demands = await this.prisma.demand.findMany({
+  async findAll(cursor?: string, limit = 10): Promise<PaginatedResult<Demand>> {
+    const findManyArgs: Prisma.DemandFindManyArgs = {
+      take: limit + 1,
+      orderBy: { id: 'asc' },
       include: {
         items: {
           include: {
@@ -90,38 +77,37 @@ export class PrismaDemandRepository extends DemandRepository {
           },
         },
       },
-    });
+    };
 
-    return demands.map((demand) => {
-      const items = demand.items.map(
-        (item) =>
-          new DemandItem({
-            id: item.id,
-            demandId: item.demandId,
-            itemId: item.itemId,
-            totalPlan: item.totalPlan,
-            totalProduced: Number(item.totalProduced || 0),
-            item: item.item
-              ? new Item({
-                  id: item.item.id,
-                  sku: item.item.sku,
-                  description: item.item.description,
-                })
-              : undefined,
-          }),
-      );
+    if (cursor) {
+      findManyArgs.cursor = { id: parseInt(cursor) };
+      findManyArgs.skip = 1;
+    }
 
-      return new Demand({
-        id: demand.id,
-        startDate: demand.startDate,
-        endDate: demand.endDate,
-        items,
-      });
-    });
+    const demands = (await this.prisma.demand.findMany(
+      findManyArgs,
+    )) as unknown as PrismaDemandWithRelations[];
+
+    const hasNextPage = demands.length > limit;
+    const data = hasNextPage ? demands.slice(0, limit) : demands;
+    const nextCursor =
+      hasNextPage && data.length > 0 ? String(data[data.length - 1].id) : null;
+    const totalCount = await this.prisma.demand.count();
+
+    const mappedData = data.map((demand) => this.mapToDemand(demand));
+
+    return {
+      data: mappedData,
+      meta: {
+        cursor: nextCursor,
+        hasNextPage,
+        totalCount,
+      },
+    };
   }
 
   async findById(id: number): Promise<Demand | null> {
-    const demand = await this.prisma.demand.findUnique({
+    const demand = (await this.prisma.demand.findUnique({
       where: { id },
       include: {
         items: {
@@ -130,34 +116,76 @@ export class PrismaDemandRepository extends DemandRepository {
           },
         },
       },
-    });
+    })) as unknown as PrismaDemandWithRelations | null;
 
     if (!demand) return null;
 
-    const items = demand.items.map(
-      (item) =>
-        new DemandItem({
-          id: item.id,
-          demandId: item.demandId,
-          itemId: item.itemId,
-          totalPlan: item.totalPlan,
-          totalProduced: Number(item.totalProduced || 0),
-          item: item.item
-            ? new Item({
-                id: item.item.id,
-                sku: item.item.sku,
-                description: item.item.description,
-              })
-            : undefined,
-        }),
-    );
+    return this.mapToDemand(demand);
+  }
 
-    return new Demand({
+  async findDemandItemsPaginated(
+    demandId: number,
+    cursor?: string,
+    limit = 10,
+  ): Promise<PaginatedResult<Demand>> {
+    const demand = await this.prisma.demand.findUnique({
+      where: { id: demandId },
+    });
+
+    if (!demand) {
+      return {
+        data: [],
+        meta: {
+          cursor: null,
+          hasNextPage: false,
+          totalCount: 0,
+        },
+      };
+    }
+
+    const findManyArgs: Prisma.DemandItemFindManyArgs = {
+      where: { demandId },
+      take: limit + 1,
+      orderBy: { id: 'asc' },
+      include: {
+        item: true,
+      },
+    };
+
+    if (cursor) {
+      findManyArgs.cursor = { id: parseInt(cursor) };
+      findManyArgs.skip = 1;
+    }
+
+    const demandItems = (await this.prisma.demandItem.findMany(
+      findManyArgs,
+    )) as unknown as PrismaDemandItemWithRelations[];
+
+    const hasNextPage = demandItems.length > limit;
+    const data = hasNextPage ? demandItems.slice(0, limit) : demandItems;
+    const nextCursor =
+      hasNextPage && data.length > 0 ? String(data[data.length - 1].id) : null;
+    const totalCount = await this.prisma.demandItem.count({
+      where: { demandId },
+    });
+
+    const items = data.map((item) => this.mapToDemandItem(item));
+
+    const demandWithPaginatedItems = new Demand({
       id: demand.id,
       startDate: demand.startDate,
       endDate: demand.endDate,
       items,
     });
+
+    return {
+      data: [demandWithPaginatedItems],
+      meta: {
+        cursor: nextCursor,
+        hasNextPage,
+        totalCount,
+      },
+    };
   }
 
   async update(
@@ -174,7 +202,6 @@ export class PrismaDemandRepository extends DemandRepository {
     if (!existingDemand) return null;
 
     const result = await this.prisma.$transaction(async (prisma) => {
-      // Atualizar apenas os campos startDate e endDate
       const updatedDemand = await prisma.demand.update({
         where: { id },
         data: {
@@ -225,74 +252,15 @@ export class PrismaDemandRepository extends DemandRepository {
           },
         });
 
-        const updatedWithItems = await prisma.demand.findUnique({
-          where: { id },
-          include: {
-            items: {
-              include: {
-                item: true,
-              },
-            },
-          },
-        });
-
-        if (!updatedWithItems) {
-          throw new Error(`Failed to retrieve updated demand with ID ${id}`);
-        }
-
-        const items = updatedWithItems.items.map(
-          (item) =>
-            new DemandItem({
-              id: item.id,
-              demandId: item.demandId,
-              itemId: item.itemId,
-              totalPlan: item.totalPlan,
-              totalProduced: Number(item.totalProduced || 0),
-              item: item.item
-                ? new Item({
-                    id: item.item.id,
-                    sku: item.item.sku,
-                    description: item.item.description,
-                  })
-                : undefined,
-            }),
-        );
-
-        return new Demand({
-          id: updatedWithItems.id,
-          startDate: updatedWithItems.startDate,
-          endDate: updatedWithItems.endDate,
-          items,
-        });
+        return this.findById(id);
       }
 
-      const items = updatedDemand.items.map(
-        (item) =>
-          new DemandItem({
-            id: item.id,
-            demandId: item.demandId,
-            itemId: item.itemId,
-            totalPlan: item.totalPlan,
-            totalProduced: Number(item.totalProduced || 0),
-            item: item.item
-              ? new Item({
-                  id: item.item.id,
-                  sku: item.item.sku,
-                  description: item.item.description,
-                })
-              : undefined,
-          }),
+      return this.mapToDemand(
+        updatedDemand as unknown as PrismaDemandWithRelations,
       );
-
-      return new Demand({
-        id: updatedDemand.id,
-        startDate: updatedDemand.startDate,
-        endDate: updatedDemand.endDate,
-        items,
-      });
     });
 
-    return result;
+    return result as Demand;
   }
 
   async delete(id: number): Promise<boolean> {
@@ -311,5 +279,37 @@ export class PrismaDemandRepository extends DemandRepository {
     } catch {
       return false;
     }
+  }
+
+  private mapToDemand(prismaDemand: PrismaDemandWithRelations): Demand {
+    const items = prismaDemand.items.map((item) => this.mapToDemandItem(item));
+
+    return new Demand({
+      id: prismaDemand.id,
+      startDate: prismaDemand.startDate,
+      endDate: prismaDemand.endDate,
+      items,
+    });
+  }
+
+  private mapToDemandItem(
+    prismaItem: PrismaDemandItemWithRelations,
+  ): DemandItem {
+    return new DemandItem({
+      id: prismaItem.id,
+      demandId: prismaItem.demandId,
+      itemId: prismaItem.itemId,
+      totalPlan: prismaItem.totalPlan,
+      totalProduced: prismaItem.totalProduced,
+      item: prismaItem.item ? this.mapToItem(prismaItem.item) : undefined,
+    });
+  }
+
+  private mapToItem(prismaItem: PrismaItemWithRelations): Item {
+    return new Item({
+      id: prismaItem.id,
+      sku: prismaItem.sku,
+      description: prismaItem.description,
+    });
   }
 }

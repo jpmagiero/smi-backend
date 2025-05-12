@@ -8,14 +8,24 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { CreateDemandDto } from '../../dtos/demand/create-demand.dto';
 import { UpdateDemandDto } from '../../dtos/demand/update-demand.dto';
 import { AddItemsToDemandDto } from '../../dtos/demand/add-items-to-demand.dto';
 import { UpdateDemandItemDto } from '../../dtos/demand/update-demand-item.dto';
 import { Demand } from '../../entities/demand/demand.entity';
-import { DemandSummary } from '../../entities/demand/demand.interface';
+import {
+  DemandSummary,
+  PaginatedResult,
+} from '../../entities/demand/demand.interface';
 import { CreateDemandUseCase } from '../../use-cases/demand/create-demand.use-case';
 import { DeleteDemandUseCase } from '../../use-cases/demand/delete-demand.use-case';
 import { GetAllDemandsUseCase } from '../../use-cases/demand/get-all-demands.use-case';
@@ -25,6 +35,7 @@ import { AddItemsToDemandUseCase } from '../../use-cases/demand/add-items-to-dem
 import { RemoveItemFromDemandUseCase } from '../../use-cases/demand/remove-item-from-demand.use-case';
 import { UpdateDemandItemUseCase } from '../../use-cases/demand/update-demand-item.use-case';
 import { DemandItem } from '../../entities/demand/demand-item.entity';
+import { PaginationDto } from '../../dtos/pagination/pagination.dto';
 
 @ApiTags('demands')
 @Controller('demands')
@@ -101,40 +112,71 @@ export class DemandsController {
   @Get()
   @ApiOperation({
     summary: 'Get all demands',
-    description: 'Returns a list of all demands with summary information',
+    description:
+      'Returns a paginated list of all demands with summary information',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor para paginação (ID do último item da página anterior)',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Número de itens por página',
+    type: Number,
   })
   @ApiResponse({
     status: 200,
     description: 'List of all demands',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'number', example: 1 },
-          startDate: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-05-01T00:00:00.000Z',
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', example: 1 },
+              startDate: {
+                type: 'string',
+                format: 'date-time',
+                example: '2023-05-01T00:00:00.000Z',
+              },
+              endDate: {
+                type: 'string',
+                format: 'date-time',
+                example: '2023-05-31T00:00:00.000Z',
+              },
+              totalPlan: { type: 'number', example: 100 },
+              totalProd: { type: 'number', example: 25 },
+              status: {
+                type: 'string',
+                enum: ['PLANNING', 'IN_PROGRESS', 'COMPLETED'],
+                example: 'IN_PROGRESS',
+              },
+            },
           },
-          endDate: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-05-31T00:00:00.000Z',
-          },
-          totalPlan: { type: 'number', example: 100 },
-          totalProd: { type: 'number', example: 25 },
-          status: {
-            type: 'string',
-            enum: ['PLANNING', 'IN_PROGRESS', 'COMPLETED'],
-            example: 'IN_PROGRESS',
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            cursor: { type: 'string', example: '10', nullable: true },
+            hasNextPage: { type: 'boolean', example: true },
+            totalCount: { type: 'number', example: 42 },
           },
         },
       },
     },
   })
-  async findAll(): Promise<DemandSummary[]> {
-    return this.getAllDemandsUseCase.execute();
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedResult<DemandSummary>> {
+    return this.getAllDemandsUseCase.execute(
+      paginationDto.cursor,
+      paginationDto.limit,
+    );
   }
 
   @Get(':id')
@@ -402,6 +444,96 @@ export class DemandsController {
       id,
       updateData.totalPlan,
       updateData.totalProduced,
+    );
+  }
+
+  @Get(':id/items')
+  @ApiOperation({
+    summary: 'Get demand items with pagination',
+    description: 'Returns demand information with paginated items',
+  })
+  @ApiParam({ name: 'id', description: 'Demand ID', example: 1 })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor para paginação (ID do último item da página anterior)',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Número de itens por página',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Demand with paginated items',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', example: 1 },
+              startDate: {
+                type: 'string',
+                format: 'date-time',
+                example: '2023-05-01T00:00:00.000Z',
+              },
+              endDate: {
+                type: 'string',
+                format: 'date-time',
+                example: '2023-05-31T00:00:00.000Z',
+              },
+              items: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number', example: 1 },
+                    demandId: { type: 'number', example: 1 },
+                    itemId: { type: 'number', example: 101 },
+                    totalPlan: { type: 'number', example: 100 },
+                    totalProduced: { type: 'number', example: 25 },
+                    item: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'number', example: 101 },
+                        sku: { type: 'string', example: 'SKU123' },
+                        description: {
+                          type: 'string',
+                          example: 'Product description',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            cursor: { type: 'string', example: '10', nullable: true },
+            hasNextPage: { type: 'boolean', example: true },
+            totalCount: { type: 'number', example: 42 },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Demand not found' })
+  async findDemandWithPaginatedItems(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedResult<Demand>> {
+    return this.getDemandByIdUseCase.executeWithPaginatedItems(
+      id,
+      paginationDto.cursor,
+      paginationDto.limit,
     );
   }
 }
