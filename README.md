@@ -56,14 +56,22 @@ API para gerenciamento de demandas de itens e peças, desenvolvida em NestJS, Pr
 
 Acesse [http://localhost:3000/api](http://localhost:3000/api) para testar todos os endpoints via Swagger.
 
-### **Categorias**
-
-- `POST /categories` — Cria uma ou mais categorias
-- `GET /categories` — Lista todas as categorias
-
 ### **Itens**
 
-- `POST /items` — Cria um ou mais itens
-- `GET /items?take=20&cursor=ID` — Lista itens paginados
-- `PUT /items/:id` — Atualiza um item individual
-- `PATCH /items/bulk/status` — Atualiza o status de vários itens em massa
+- `POST /items` — Cria um único item ou múltiplos itens em uma única requisição
+- `GET /items` — Lista todos os itens
+- `GET /items/:id` — Obtém detalhes de um item específico
+- `PUT /items/:id` — Atualiza um item específico
+- `DELETE /items/:id` — Remove um item específico
+
+### **Demandas**
+
+- `POST /demands` — Cria uma nova demanda
+- `GET /demands?cursor=ID&limit=10` — Lista demandas paginadas usando cursor
+- `GET /demands/:id` — Obtém detalhes de uma demanda específica
+- `PUT /demands/:id` — Atualiza uma demanda específica
+- `DELETE /demands/:id` — Remove uma demanda específica
+- `POST /demands/:id/items` — Adiciona itens a uma demanda existente
+- `DELETE /demands/:demandId/items/:itemId` — Remove um item específico de uma demanda
+- `PATCH /demands/items/:id` — Atualiza informações de um item em uma demanda
+- `GET /demands/:id/items?cursor=ID&limit=10` — Obtém itens paginados de uma demanda específica
