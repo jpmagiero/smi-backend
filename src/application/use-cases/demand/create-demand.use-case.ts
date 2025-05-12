@@ -26,7 +26,7 @@ export class CreateDemandUseCase {
 
       if (nonExistentItemIds.length > 0) {
         throw new BadRequestException(
-          `Não foi possível criar a demanda. Os seguintes itens não existem: ${nonExistentItemIds.join(', ')}`,
+          `It was not possible to create the demand. The following items do not exist: ${nonExistentItemIds.join(', ')}`,
         );
       }
     }
@@ -34,7 +34,6 @@ export class CreateDemandUseCase {
     const demand = new Demand({
       startDate: createDemandDto.startDate,
       endDate: createDemandDto.endDate,
-      status: createDemandDto.status,
       items: createDemandDto.items
         ? createDemandDto.items.map(
             (itemDto) =>

@@ -15,6 +15,7 @@ import { UpdateDemandDto } from '../../dtos/demand/update-demand.dto';
 import { AddItemsToDemandDto } from '../../dtos/demand/add-items-to-demand.dto';
 import { UpdateDemandItemDto } from '../../dtos/demand/update-demand-item.dto';
 import { Demand } from '../../entities/demand/demand.entity';
+import { DemandSummary } from '../../entities/demand/demand.interface';
 import { CreateDemandUseCase } from '../../use-cases/demand/create-demand.use-case';
 import { DeleteDemandUseCase } from '../../use-cases/demand/delete-demand.use-case';
 import { GetAllDemandsUseCase } from '../../use-cases/demand/get-all-demands.use-case';
@@ -49,7 +50,7 @@ export class DemandsController {
   @Get()
   @ApiOperation({ summary: 'Get all demands' })
   @ApiResponse({ status: 200, description: 'List of all demands' })
-  async findAll(): Promise<Demand[]> {
+  async findAll(): Promise<DemandSummary[]> {
     return this.getAllDemandsUseCase.execute();
   }
 
@@ -64,9 +65,9 @@ export class DemandsController {
 
   @Put(':id')
   @ApiOperation({
-    summary: 'Atualizar uma demanda',
+    summary: 'Update a demand',
     description:
-      'Atualiza apenas os dados básicos da demanda (startDate, endDate, status). Para gerenciar itens, utilize os endpoints específicos.',
+      'Update the demand without changing the items. To manage items, use the specific endpoints.',
   })
   @ApiParam({ name: 'id', description: 'Demand ID' })
   @ApiResponse({ status: 200, description: 'Demand updated successfully' })
@@ -89,14 +90,14 @@ export class DemandsController {
 
   @Post(':id/items')
   @ApiOperation({
-    summary: 'Adicionar itens a uma demanda existente',
+    summary: 'Add items to a demand',
     description:
-      'Permite adicionar novos itens à demanda sem alterar os itens existentes',
+      'Allows adding new items to a demand without changing existing items',
   })
-  @ApiParam({ name: 'id', description: 'ID da demanda' })
-  @ApiResponse({ status: 200, description: 'Itens adicionados com sucesso' })
-  @ApiResponse({ status: 404, description: 'Demanda não encontrada' })
-  @ApiResponse({ status: 400, description: 'Itens inválidos ou inexistentes' })
+  @ApiParam({ name: 'id', description: 'Demand ID' })
+  @ApiResponse({ status: 200, description: 'Items added successfully' })
+  @ApiResponse({ status: 404, description: 'Demand not found' })
+  @ApiResponse({ status: 400, description: 'Invalid or nonexistent items' })
   async addItems(
     @Param('id', ParseIntPipe) id: number,
     @Body() addItemsDto: AddItemsToDemandDto,
@@ -106,13 +107,13 @@ export class DemandsController {
 
   @Delete(':demandId/items/:itemId')
   @ApiOperation({
-    summary: 'Remover um item específico de uma demanda',
-    description: 'Remove apenas o item especificado da demanda',
+    summary: 'Remove a specific item from a demand',
+    description: 'Remove only the specified item from the demand',
   })
-  @ApiParam({ name: 'demandId', description: 'ID da demanda' })
-  @ApiParam({ name: 'itemId', description: 'ID do item a ser removido' })
-  @ApiResponse({ status: 200, description: 'Item removido com sucesso' })
-  @ApiResponse({ status: 404, description: 'Demanda ou item não encontrado' })
+  @ApiParam({ name: 'demandId', description: 'Demand ID' })
+  @ApiParam({ name: 'itemId', description: 'Item ID to be removed' })
+  @ApiResponse({ status: 200, description: 'Item removed successfully' })
+  @ApiResponse({ status: 404, description: 'Demand or item not found' })
   async removeItem(
     @Param('demandId', ParseIntPipe) demandId: number,
     @Param('itemId', ParseIntPipe) itemId: number,

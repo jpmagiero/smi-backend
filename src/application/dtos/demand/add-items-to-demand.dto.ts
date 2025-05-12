@@ -5,7 +5,7 @@ import { CreateDemandItemDto } from './create-demand-item.dto';
 
 export class AddItemsToDemandDto {
   @ApiProperty({
-    description: 'Lista de itens a serem adicionados à demanda',
+    description: 'List of items to be added to the demand',
     type: [CreateDemandItemDto],
   })
   @IsArray()

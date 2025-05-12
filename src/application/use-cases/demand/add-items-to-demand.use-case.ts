@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { Demand } from '../../entities/demand/demand.entity';
 import { DemandRepository } from '../../repositories/demand/demand-repository';
@@ -19,7 +20,7 @@ export class AddItemsToDemandUseCase {
   async execute(id: number, dto: AddItemsToDemandDto): Promise<Demand> {
     const existingDemand = await this.demandRepository.findById(id);
     if (!existingDemand) {
-      throw new NotFoundException(`Demanda com ID ${id} não encontrada`);
+      throw new NotFoundException(`Demand with ID ${id} not found`);
     }
 
     const itemIds = dto.items.map((item) => item.itemId);
@@ -34,11 +35,25 @@ export class AddItemsToDemandUseCase {
 
     if (nonExistentItemIds.length > 0) {
       throw new BadRequestException(
-        `Não foi possível adicionar itens à demanda. Os seguintes itens não existem: ${nonExistentItemIds.join(', ')}`,
+        `It was not possible to add items to the demand. The following items do not exist: ${nonExistentItemIds.join(', ')}`,
       );
     }
 
     const existingItems = existingDemand.items || [];
+    const existingItemIds = existingItems.map((item) => item.itemId);
+
+    const duplicatedItems = dto.items.filter((item) =>
+      existingItemIds.includes(item.itemId),
+    );
+
+    if (duplicatedItems.length > 0) {
+      const duplicatedIds = duplicatedItems
+        .map((item) => item.itemId)
+        .join(', ');
+      throw new ConflictException(
+        `It is not possible to add duplicate items. The following items already exist in the demand: ${duplicatedIds}`,
+      );
+    }
 
     const newDemandItems = dto.items.map(
       (itemDto) =>
@@ -57,7 +72,7 @@ export class AddItemsToDemandUseCase {
     });
 
     if (!updatedDemand) {
-      throw new NotFoundException(`Falha ao atualizar a demanda com ID ${id}`);
+      throw new NotFoundException(`Failed to update the demand with ID ${id}`);
     }
 
     return updatedDemand;

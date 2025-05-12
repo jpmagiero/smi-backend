@@ -17,7 +17,6 @@ export class UpdateDemandUseCase {
     const updateData: Partial<Demand> = {
       startDate: updateDemandDto.startDate,
       endDate: updateDemandDto.endDate,
-      status: updateDemandDto.status,
     };
 
     const updatedDemand = await this.demandRepository.update(id, updateData);

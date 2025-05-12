@@ -3,6 +3,7 @@ import { PrismaService } from './prisma.service';
 import { DemandItemRepository } from '../../../repositories/demand/demand-item-repository';
 import { DemandItem } from '../../../entities/demand/demand-item.entity';
 import { Item } from '../../../entities/item.entity';
+import { calculateDemandStatus } from '../../../utils/demand-status.util';
 
 @Injectable()
 export class PrismaDemandItemRepository extends DemandItemRepository {
@@ -168,27 +169,50 @@ export class PrismaDemandItemRepository extends DemandItemRepository {
         throw new Error('No quantities provided for update');
       }
 
-      const updated = await this.prisma.demandItem.update({
-        where: { id },
-        data,
-        include: {
-          item: true,
-        },
-      });
+      return await this.prisma.$transaction(async (prisma) => {
+        const updated = await prisma.demandItem.update({
+          where: { id },
+          data,
+          include: {
+            item: true,
+          },
+        });
 
-      return new DemandItem({
-        id: updated.id,
-        demandId: updated.demandId,
-        itemId: updated.itemId,
-        totalPlan: updated.totalPlan,
-        totalProduced: Number(updated.totalProduced || 0),
-        item: updated.item
-          ? new Item({
-              id: updated.item.id,
-              sku: updated.item.sku,
-              description: updated.item.description,
-            })
-          : undefined,
+        const demandItems = await prisma.demandItem.findMany({
+          where: { demandId: updated.demandId },
+        });
+
+        const totalPlanSum = demandItems.reduce(
+          (sum, item) => sum + item.totalPlan,
+          0,
+        );
+
+        const totalProducedSum = demandItems.reduce(
+          (sum, item) => sum + (item.totalProduced || 0),
+          0,
+        );
+
+        const status = calculateDemandStatus(totalPlanSum, totalProducedSum);
+
+        await prisma.demand.update({
+          where: { id: updated.demandId },
+          data: { status },
+        });
+
+        return new DemandItem({
+          id: updated.id,
+          demandId: updated.demandId,
+          itemId: updated.itemId,
+          totalPlan: updated.totalPlan,
+          totalProduced: Number(updated.totalProduced || 0),
+          item: updated.item
+            ? new Item({
+                id: updated.item.id,
+                sku: updated.item.sku,
+                description: updated.item.description,
+              })
+            : undefined,
+        });
       });
     } catch (error) {
       console.error('Error updating demand item quantities:', error);

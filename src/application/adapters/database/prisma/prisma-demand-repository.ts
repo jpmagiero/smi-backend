@@ -4,6 +4,7 @@ import { DemandRepository } from '../../../repositories/demand/demand-repository
 import { Demand, DemandStatus } from '../../../entities/demand/demand.entity';
 import { DemandItem } from '../../../entities/demand/demand-item.entity';
 import { Item } from '../../../entities/item.entity';
+import { calculateDemandStatus } from '../../../utils/demand-status.util';
 
 @Injectable()
 export class PrismaDemandRepository extends DemandRepository {
@@ -17,7 +18,7 @@ export class PrismaDemandRepository extends DemandRepository {
         data: {
           startDate: demand.startDate,
           endDate: demand.endDate,
-          status: demand.status,
+          status: DemandStatus.PLANNING,
         },
       });
 
@@ -73,7 +74,6 @@ export class PrismaDemandRepository extends DemandRepository {
         id: demandWithItems.id,
         startDate: demandWithItems.startDate,
         endDate: demandWithItems.endDate,
-        status: demandWithItems.status as DemandStatus,
         items,
       });
     });
@@ -115,7 +115,6 @@ export class PrismaDemandRepository extends DemandRepository {
         id: demand.id,
         startDate: demand.startDate,
         endDate: demand.endDate,
-        status: demand.status as DemandStatus,
         items,
       });
     });
@@ -157,7 +156,6 @@ export class PrismaDemandRepository extends DemandRepository {
       id: demand.id,
       startDate: demand.startDate,
       endDate: demand.endDate,
-      status: demand.status as DemandStatus,
       items,
     });
   }
@@ -176,12 +174,12 @@ export class PrismaDemandRepository extends DemandRepository {
     if (!existingDemand) return null;
 
     const result = await this.prisma.$transaction(async (prisma) => {
+      // Atualizar apenas os campos startDate e endDate
       const updatedDemand = await prisma.demand.update({
         where: { id },
         data: {
           startDate: demandData.startDate ?? existingDemand.startDate,
           endDate: demandData.endDate ?? existingDemand.endDate,
-          status: demandData.status ?? existingDemand.status,
         },
         include: {
           items: {
@@ -209,6 +207,23 @@ export class PrismaDemandRepository extends DemandRepository {
             });
           }
         }
+
+        const totalPlan = demandData.items.reduce(
+          (sum, item) => sum + (item.totalPlan || 0),
+          0,
+        );
+        const totalProduced = demandData.items.reduce(
+          (sum, item) => sum + (Number(item.totalProduced) || 0),
+          0,
+        );
+        const newStatus = calculateDemandStatus(totalPlan, totalProduced);
+
+        await prisma.demand.update({
+          where: { id },
+          data: {
+            status: newStatus,
+          },
+        });
 
         const updatedWithItems = await prisma.demand.findUnique({
           where: { id },
@@ -247,7 +262,6 @@ export class PrismaDemandRepository extends DemandRepository {
           id: updatedWithItems.id,
           startDate: updatedWithItems.startDate,
           endDate: updatedWithItems.endDate,
-          status: updatedWithItems.status as DemandStatus,
           items,
         });
       }
@@ -274,7 +288,6 @@ export class PrismaDemandRepository extends DemandRepository {
         id: updatedDemand.id,
         startDate: updatedDemand.startDate,
         endDate: updatedDemand.endDate,
-        status: updatedDemand.status as DemandStatus,
         items,
       });
     });

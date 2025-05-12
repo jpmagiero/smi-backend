@@ -9,7 +9,7 @@ export class RemoveItemFromDemandUseCase {
   async execute(demandId: number, itemId: number): Promise<Demand> {
     const existingDemand = await this.demandRepository.findById(demandId);
     if (!existingDemand) {
-      throw new NotFoundException(`Demanda com ID ${demandId} não encontrada`);
+      throw new NotFoundException(`Demand with ID ${demandId} not found`);
     }
 
     const existingItems = existingDemand.items || [];
@@ -17,7 +17,7 @@ export class RemoveItemFromDemandUseCase {
 
     if (!itemExists) {
       throw new NotFoundException(
-        `Item com ID ${itemId} não encontrado na demanda ${demandId}`,
+        `Item with ID ${itemId} not found in demand ${demandId}`,
       );
     }
 
@@ -29,7 +29,7 @@ export class RemoveItemFromDemandUseCase {
 
     if (!updatedDemand) {
       throw new NotFoundException(
-        `Falha ao atualizar a demanda com ID ${demandId}`,
+        `Failed to update the demand with ID ${demandId}`,
       );
     }
 

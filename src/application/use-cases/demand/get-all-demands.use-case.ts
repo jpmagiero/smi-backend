@@ -1,19 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { DemandRepository } from '../../repositories/demand/demand-repository';
-import { Demand } from '../../entities/demand/demand.entity';
-
-interface DemandWithSummary extends Demand {
-  totalPlan: number;
-  totalProd: number;
-}
+import { calculateDemandStatus } from '../../utils/demand-status.util';
+import { DemandSummary } from '../../entities/demand/demand.interface';
 
 @Injectable()
 export class GetAllDemandsUseCase {
   constructor(private readonly demandRepository: DemandRepository) {}
 
-  async execute(): Promise<DemandWithSummary[]> {
+  async execute(): Promise<DemandSummary[]> {
     const demands = await this.demandRepository.findAll();
 
-    return demands as DemandWithSummary[];
+    return demands.map((demand) => {
+      const totalPlan = demand.totalPlan;
+      const totalProd = demand.totalProd;
+
+      return {
+        id: demand.id!,
+        startDate: demand.startDate,
+        endDate: demand.endDate,
+        totalPlan,
+        totalProd,
+        status: calculateDemandStatus(totalPlan, totalProd),
+      };
+    });
   }
 }

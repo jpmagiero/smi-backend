@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsOptional } from 'class-validator';
-import { DemandStatus } from '../../entities/demand/demand.entity';
+import { IsDate, IsOptional } from 'class-validator';
 
 export class UpdateDemandDto {
   @ApiProperty({
@@ -23,14 +22,4 @@ export class UpdateDemandDto {
   @IsDate()
   @Type(() => Date)
   endDate?: Date;
-
-  @ApiProperty({
-    description: 'Status of the demand',
-    enum: DemandStatus,
-    example: 'PLANNING',
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(DemandStatus)
-  status?: DemandStatus;
 }

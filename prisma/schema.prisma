@@ -11,7 +11,7 @@ model Demand {
   id         Int   @id @default(autoincrement())
   startDate  DateTime
   endDate    DateTime
-  status     DemandStatus
+  status     DemandStatus @default(PLANNING)
   items      DemandItem[]
 }
 
