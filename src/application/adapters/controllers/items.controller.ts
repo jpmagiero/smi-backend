@@ -30,33 +30,96 @@ export class ItemsController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new item' })
-  @ApiResponse({ status: 201, description: 'Item created successfully' })
+  @ApiOperation({
+    summary: 'Create a new item',
+    description: 'Creates a new item with SKU and description',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Item created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 101 },
+        sku: { type: 'string', example: 'SKU12345' },
+        description: { type: 'string', example: 'Product description' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
+  @ApiResponse({ status: 409, description: 'Conflict - SKU already exists' })
   async create(@Body() createItemDto: CreateItemDto): Promise<Item> {
     return this.createItemUseCase.execute(createItemDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all items' })
-  @ApiResponse({ status: 200, description: 'List of all items' })
+  @ApiOperation({
+    summary: 'Get all items',
+    description: 'Returns a list of all items in the system',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all items',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 101 },
+          sku: { type: 'string', example: 'SKU12345' },
+          description: { type: 'string', example: 'Product description' },
+        },
+      },
+    },
+  })
   async findAll(): Promise<Item[]> {
     return this.getAllItemsUseCase.execute();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an item by ID' })
-  @ApiParam({ name: 'id', description: 'Item ID' })
-  @ApiResponse({ status: 200, description: 'Item found' })
+  @ApiOperation({
+    summary: 'Get an item by ID',
+    description: 'Returns detailed information about a specific item',
+  })
+  @ApiParam({ name: 'id', description: 'Item ID', example: 101 })
+  @ApiResponse({
+    status: 200,
+    description: 'Item found',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 101 },
+        sku: { type: 'string', example: 'SKU12345' },
+        description: { type: 'string', example: 'Product description' },
+      },
+    },
+  })
   @ApiResponse({ status: 404, description: 'Item not found' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Item> {
     return this.getItemByIdUseCase.execute(id);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update an item' })
-  @ApiParam({ name: 'id', description: 'Item ID' })
-  @ApiResponse({ status: 200, description: 'Item updated successfully' })
+  @ApiOperation({
+    summary: 'Update an item',
+    description: "Updates an existing item's SKU and/or description",
+  })
+  @ApiParam({ name: 'id', description: 'Item ID', example: 101 })
+  @ApiResponse({
+    status: 200,
+    description: 'Item updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 101 },
+        sku: { type: 'string', example: 'SKU12345-UPDATED' },
+        description: { type: 'string', example: 'Updated product description' },
+      },
+    },
+  })
   @ApiResponse({ status: 404, description: 'Item not found' })
+  @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
+  @ApiResponse({ status: 409, description: 'Conflict - SKU already exists' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateItemDto: UpdateItemDto,
@@ -65,10 +128,19 @@ export class ItemsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete an item' })
-  @ApiParam({ name: 'id', description: 'Item ID' })
+  @ApiOperation({
+    summary: 'Delete an item',
+    description:
+      'Permanently removes an item from the system. Cannot delete items that are associated with demands.',
+  })
+  @ApiParam({ name: 'id', description: 'Item ID', example: 101 })
   @ApiResponse({ status: 200, description: 'Item deleted successfully' })
   @ApiResponse({ status: 404, description: 'Item not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Conflict - Item is associated with demands and cannot be deleted',
+  })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.deleteItemUseCase.execute(id);
   }
