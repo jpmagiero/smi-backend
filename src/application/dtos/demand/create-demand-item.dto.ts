@@ -12,4 +12,13 @@ export class CreateDemandItemDto {
   @IsNumber()
   @Min(1)
   totalPlan: number;
+
+  @ApiProperty({
+    description: 'Total produced quantity',
+    example: 0,
+    required: false,
+  })
+  @IsNumber()
+  @Min(0)
+  totalProduced?: number;
 }

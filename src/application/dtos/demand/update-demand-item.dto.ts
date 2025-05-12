@@ -3,30 +3,22 @@ import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class UpdateDemandItemDto {
   @ApiProperty({
-    description: 'ID of the item relation',
-    example: 1,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  id?: number;
-
-  @ApiProperty({
-    description: 'Item ID',
-    example: 1,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  itemId?: number;
-
-  @ApiProperty({
-    description: 'Total plan for the item',
+    description: 'Total planned quantity',
     example: 100,
     required: false,
   })
   @IsOptional()
   @IsNumber()
-  @Min(1)
+  @Min(0)
   totalPlan?: number;
+
+  @ApiProperty({
+    description: 'Total produced quantity',
+    example: 50,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  totalProduced?: number;
 }

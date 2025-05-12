@@ -26,4 +26,12 @@ export class Demand {
     this.items = params.items || [];
     this.id = params.id;
   }
+
+  get totalPlan(): number {
+    return this.items.reduce((sum, item) => sum + (item.totalPlan || 0), 0);
+  }
+
+  get totalProd(): number {
+    return this.items.reduce((sum, item) => sum + (item.totalProduced || 0), 0);
+  }
 }

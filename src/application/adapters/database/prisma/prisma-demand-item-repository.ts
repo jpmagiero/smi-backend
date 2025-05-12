@@ -148,6 +148,54 @@ export class PrismaDemandItemRepository extends DemandItemRepository {
     }
   }
 
+  async updateDemandItem(
+    id: number,
+    totalPlan?: number,
+    totalProduced?: number,
+  ): Promise<DemandItem | null> {
+    try {
+      const data: { totalPlan?: number; totalProduced?: number } = {};
+
+      if (totalPlan !== undefined) {
+        data.totalPlan = totalPlan;
+      }
+
+      if (totalProduced !== undefined) {
+        data.totalProduced = Number(totalProduced || 0);
+      }
+
+      if (Object.keys(data).length === 0) {
+        throw new Error('No quantities provided for update');
+      }
+
+      const updated = await this.prisma.demandItem.update({
+        where: { id },
+        data,
+        include: {
+          item: true,
+        },
+      });
+
+      return new DemandItem({
+        id: updated.id,
+        demandId: updated.demandId,
+        itemId: updated.itemId,
+        totalPlan: updated.totalPlan,
+        totalProduced: Number(updated.totalProduced || 0),
+        item: updated.item
+          ? new Item({
+              id: updated.item.id,
+              sku: updated.item.sku,
+              description: updated.item.description,
+            })
+          : undefined,
+      });
+    } catch (error) {
+      console.error('Error updating demand item quantities:', error);
+      return null;
+    }
+  }
+
   async delete(id: number): Promise<boolean> {
     try {
       await this.prisma.demandItem.delete({

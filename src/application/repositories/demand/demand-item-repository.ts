@@ -9,6 +9,11 @@ export abstract class DemandItemRepository {
     id: number,
     demandItem: Partial<DemandItem>,
   ): Promise<DemandItem | null>;
+  abstract updateDemandItem(
+    id: number,
+    totalPlan?: number,
+    totalProduced?: number,
+  ): Promise<DemandItem | null>;
   abstract delete(id: number): Promise<boolean>;
   abstract deleteByDemandId(demandId: number): Promise<boolean>;
 }

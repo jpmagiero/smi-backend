@@ -41,6 +41,7 @@ export class CreateDemandUseCase {
               new DemandItem({
                 itemId: itemDto.itemId,
                 totalPlan: itemDto.totalPlan,
+                totalProduced: itemDto.totalProduced || 0,
                 demandId: 0,
               }),
           )

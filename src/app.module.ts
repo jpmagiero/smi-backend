@@ -20,6 +20,7 @@ import { PrismaDemandItemRepository } from './application/adapters/database/pris
 import { DemandRepository } from './application/repositories/demand/demand-repository';
 import { ItemRepository } from './application/repositories/item.repository';
 import { DemandItemRepository } from './application/repositories/demand/demand-item-repository';
+import { UpdateDemandItemUseCase } from './application/use-cases/demand/update-demand-item.use-case';
 
 @Module({
   imports: [],
@@ -34,6 +35,7 @@ import { DemandItemRepository } from './application/repositories/demand/demand-i
     DeleteDemandUseCase,
     AddItemsToDemandUseCase,
     RemoveItemFromDemandUseCase,
+    UpdateDemandItemUseCase,
     // Item use cases
     CreateItemUseCase,
     GetAllItemsUseCase,

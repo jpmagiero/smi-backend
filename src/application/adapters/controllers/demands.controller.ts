@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -12,6 +13,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CreateDemandDto } from '../../dtos/demand/create-demand.dto';
 import { UpdateDemandDto } from '../../dtos/demand/update-demand.dto';
 import { AddItemsToDemandDto } from '../../dtos/demand/add-items-to-demand.dto';
+import { UpdateDemandItemDto } from '../../dtos/demand/update-demand-item.dto';
 import { Demand } from '../../entities/demand/demand.entity';
 import { CreateDemandUseCase } from '../../use-cases/demand/create-demand.use-case';
 import { DeleteDemandUseCase } from '../../use-cases/demand/delete-demand.use-case';
@@ -20,6 +22,8 @@ import { GetDemandByIdUseCase } from '../../use-cases/demand/get-demand-by-id.us
 import { UpdateDemandUseCase } from '../../use-cases/demand/update-demand.use-case';
 import { AddItemsToDemandUseCase } from '../../use-cases/demand/add-items-to-demand.use-case';
 import { RemoveItemFromDemandUseCase } from '../../use-cases/demand/remove-item-from-demand.use-case';
+import { UpdateDemandItemUseCase } from '../../use-cases/demand/update-demand-item.use-case';
+import { DemandItem } from '../../entities/demand/demand-item.entity';
 
 @ApiTags('demands')
 @Controller('demands')
@@ -32,6 +36,7 @@ export class DemandsController {
     private readonly deleteDemandUseCase: DeleteDemandUseCase,
     private readonly addItemsToDemandUseCase: AddItemsToDemandUseCase,
     private readonly removeItemFromDemandUseCase: RemoveItemFromDemandUseCase,
+    private readonly updateDemandItemUseCase: UpdateDemandItemUseCase,
   ) {}
 
   @Post()
@@ -113,5 +118,23 @@ export class DemandsController {
     @Param('itemId', ParseIntPipe) itemId: number,
   ): Promise<Demand> {
     return this.removeItemFromDemandUseCase.execute(demandId, itemId);
+  }
+
+  @Patch('items/:id')
+  @ApiOperation({ summary: 'Update of a demand item' })
+  @ApiResponse({
+    status: 200,
+    description: 'Demand item updated successfully',
+  })
+  @ApiParam({ name: 'id', description: 'Demand item ID' })
+  async updateDemandItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateData: UpdateDemandItemDto,
+  ): Promise<DemandItem> {
+    return this.updateDemandItemUseCase.execute(
+      id,
+      updateData.totalPlan,
+      updateData.totalProduced,
+    );
   }
 }

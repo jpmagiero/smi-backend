@@ -23,10 +23,11 @@ model Item {
 }
 
 model DemandItem {
-  id         Int     @id @default(autoincrement())
-  demandId   Int
-  itemId     Int
-  totalPlan  Int
+  id            Int     @id @default(autoincrement())
+  demandId      Int
+  itemId        Int
+  totalPlan     Int
+  totalProduced Int     @default(0)
 
   demand     Demand  @relation(fields: [demandId], references: [id], onDelete: Cascade)
   item       Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)

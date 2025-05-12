@@ -12,7 +12,7 @@ export class PrismaDemandRepository extends DemandRepository {
   }
 
   async create(demand: Demand): Promise<Demand> {
-    return this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma) => {
       const createdDemand = await prisma.demand.create({
         data: {
           startDate: demand.startDate,
@@ -28,6 +28,7 @@ export class PrismaDemandRepository extends DemandRepository {
               demandId: createdDemand.id,
               itemId: demandItem.itemId,
               totalPlan: demandItem.totalPlan,
+              totalProduced: Number(demandItem.totalProduced || 0),
             },
           });
         }
@@ -50,29 +51,34 @@ export class PrismaDemandRepository extends DemandRepository {
         );
       }
 
+      const items = demandWithItems.items.map(
+        (item) =>
+          new DemandItem({
+            id: item.id,
+            demandId: item.demandId,
+            itemId: item.itemId,
+            totalPlan: item.totalPlan,
+            totalProduced: Number(item.totalProduced || 0),
+            item: item.item
+              ? new Item({
+                  id: item.item.id,
+                  sku: item.item.sku,
+                  description: item.item.description,
+                })
+              : undefined,
+          }),
+      );
+
       return new Demand({
         id: demandWithItems.id,
         startDate: demandWithItems.startDate,
         endDate: demandWithItems.endDate,
         status: demandWithItems.status as DemandStatus,
-        items: demandWithItems.items.map(
-          (demandItem) =>
-            new DemandItem({
-              id: demandItem.id,
-              demandId: demandItem.demandId,
-              itemId: demandItem.itemId,
-              totalPlan: demandItem.totalPlan,
-              item: demandItem.item
-                ? new Item({
-                    id: demandItem.item.id,
-                    sku: demandItem.item.sku,
-                    description: demandItem.item.description,
-                  })
-                : undefined,
-            }),
-        ),
+        items,
       });
     });
+
+    return result;
   }
 
   async findAll(): Promise<Demand[]> {
@@ -86,31 +92,33 @@ export class PrismaDemandRepository extends DemandRepository {
       },
     });
 
-    return demands.map(
-      (demand) =>
-        new Demand({
-          id: demand.id,
-          startDate: demand.startDate,
-          endDate: demand.endDate,
-          status: demand.status as DemandStatus,
-          items: demand.items.map(
-            (demandItem) =>
-              new DemandItem({
-                id: demandItem.id,
-                demandId: demandItem.demandId,
-                itemId: demandItem.itemId,
-                totalPlan: demandItem.totalPlan,
-                item: demandItem.item
-                  ? new Item({
-                      id: demandItem.item.id,
-                      sku: demandItem.item.sku,
-                      description: demandItem.item.description,
-                    })
-                  : undefined,
-              }),
-          ),
-        }),
-    );
+    return demands.map((demand) => {
+      const items = demand.items.map(
+        (item) =>
+          new DemandItem({
+            id: item.id,
+            demandId: item.demandId,
+            itemId: item.itemId,
+            totalPlan: item.totalPlan,
+            totalProduced: Number(item.totalProduced || 0),
+            item: item.item
+              ? new Item({
+                  id: item.item.id,
+                  sku: item.item.sku,
+                  description: item.item.description,
+                })
+              : undefined,
+          }),
+      );
+
+      return new Demand({
+        id: demand.id,
+        startDate: demand.startDate,
+        endDate: demand.endDate,
+        status: demand.status as DemandStatus,
+        items,
+      });
+    });
   }
 
   async findById(id: number): Promise<Demand | null> {
@@ -127,27 +135,30 @@ export class PrismaDemandRepository extends DemandRepository {
 
     if (!demand) return null;
 
+    const items = demand.items.map(
+      (item) =>
+        new DemandItem({
+          id: item.id,
+          demandId: item.demandId,
+          itemId: item.itemId,
+          totalPlan: item.totalPlan,
+          totalProduced: Number(item.totalProduced || 0),
+          item: item.item
+            ? new Item({
+                id: item.item.id,
+                sku: item.item.sku,
+                description: item.item.description,
+              })
+            : undefined,
+        }),
+    );
+
     return new Demand({
       id: demand.id,
       startDate: demand.startDate,
       endDate: demand.endDate,
       status: demand.status as DemandStatus,
-      items: demand.items.map(
-        (demandItem) =>
-          new DemandItem({
-            id: demandItem.id,
-            demandId: demandItem.demandId,
-            itemId: demandItem.itemId,
-            totalPlan: demandItem.totalPlan,
-            item: demandItem.item
-              ? new Item({
-                  id: demandItem.item.id,
-                  sku: demandItem.item.sku,
-                  description: demandItem.item.description,
-                })
-              : undefined,
-          }),
-      ),
+      items,
     });
   }
 
@@ -164,7 +175,7 @@ export class PrismaDemandRepository extends DemandRepository {
 
     if (!existingDemand) return null;
 
-    return this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma) => {
       const updatedDemand = await prisma.demand.update({
         where: { id },
         data: {
@@ -193,12 +204,13 @@ export class PrismaDemandRepository extends DemandRepository {
                 demandId: id,
                 itemId: demandItem.itemId,
                 totalPlan: demandItem.totalPlan,
+                totalProduced: Number(demandItem.totalProduced || 0),
               },
             });
           }
         }
 
-        const demandWithUpdatedItems = await prisma.demand.findUnique({
+        const updatedWithItems = await prisma.demand.findUnique({
           where: { id },
           include: {
             items: {
@@ -209,63 +221,77 @@ export class PrismaDemandRepository extends DemandRepository {
           },
         });
 
-        if (!demandWithUpdatedItems) {
+        if (!updatedWithItems) {
           throw new Error(`Failed to retrieve updated demand with ID ${id}`);
         }
 
+        const items = updatedWithItems.items.map(
+          (item) =>
+            new DemandItem({
+              id: item.id,
+              demandId: item.demandId,
+              itemId: item.itemId,
+              totalPlan: item.totalPlan,
+              totalProduced: Number(item.totalProduced || 0),
+              item: item.item
+                ? new Item({
+                    id: item.item.id,
+                    sku: item.item.sku,
+                    description: item.item.description,
+                  })
+                : undefined,
+            }),
+        );
+
         return new Demand({
-          id: demandWithUpdatedItems.id,
-          startDate: demandWithUpdatedItems.startDate,
-          endDate: demandWithUpdatedItems.endDate,
-          status: demandWithUpdatedItems.status as DemandStatus,
-          items: demandWithUpdatedItems.items.map(
-            (demandItem) =>
-              new DemandItem({
-                id: demandItem.id,
-                demandId: demandItem.demandId,
-                itemId: demandItem.itemId,
-                totalPlan: demandItem.totalPlan,
-                item: demandItem.item
-                  ? new Item({
-                      id: demandItem.item.id,
-                      sku: demandItem.item.sku,
-                      description: demandItem.item.description,
-                    })
-                  : undefined,
-              }),
-          ),
+          id: updatedWithItems.id,
+          startDate: updatedWithItems.startDate,
+          endDate: updatedWithItems.endDate,
+          status: updatedWithItems.status as DemandStatus,
+          items,
         });
       }
+
+      const items = updatedDemand.items.map(
+        (item) =>
+          new DemandItem({
+            id: item.id,
+            demandId: item.demandId,
+            itemId: item.itemId,
+            totalPlan: item.totalPlan,
+            totalProduced: Number(item.totalProduced || 0),
+            item: item.item
+              ? new Item({
+                  id: item.item.id,
+                  sku: item.item.sku,
+                  description: item.item.description,
+                })
+              : undefined,
+          }),
+      );
 
       return new Demand({
         id: updatedDemand.id,
         startDate: updatedDemand.startDate,
         endDate: updatedDemand.endDate,
         status: updatedDemand.status as DemandStatus,
-        items: updatedDemand.items.map(
-          (demandItem) =>
-            new DemandItem({
-              id: demandItem.id,
-              demandId: demandItem.demandId,
-              itemId: demandItem.itemId,
-              totalPlan: demandItem.totalPlan,
-              item: demandItem.item
-                ? new Item({
-                    id: demandItem.item.id,
-                    sku: demandItem.item.sku,
-                    description: demandItem.item.description,
-                  })
-                : undefined,
-            }),
-        ),
+        items,
       });
     });
+
+    return result;
   }
 
   async delete(id: number): Promise<boolean> {
     try {
-      await this.prisma.demand.delete({
-        where: { id },
+      await this.prisma.$transaction(async (prisma) => {
+        await prisma.demandItem.deleteMany({
+          where: { demandId: id },
+        });
+
+        await prisma.demand.delete({
+          where: { id },
+        });
       });
 
       return true;
