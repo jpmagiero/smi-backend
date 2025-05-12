@@ -2,6 +2,7 @@ import { Item } from '../entities/item.entity';
 
 export abstract class ItemRepository {
   abstract create(item: Item): Promise<Item>;
+  abstract createMany(items: Item[]): Promise<Item[]>;
   abstract findAll(): Promise<Item[]>;
   abstract findByDemandId(demandId: number): Promise<Item[]>;
   abstract findBySku(sku: string): Promise<Item | null>;

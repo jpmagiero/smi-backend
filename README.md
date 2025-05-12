@@ -1,12 +1,12 @@
 # Smi Backend
 
-API para gerenciamento de peças de roupa e acessórios, desenvolvida em NestJS, Prisma e PostgreSQL, seguindo a Clean Architecture.
+API para gerenciamento de demandas de itens e peças, desenvolvida em NestJS, Prisma e SQLite, seguindo a Clean Architecture.
 
 ## Tecnologias
 
 - [NestJS](https://nestjs.com/)
 - [Prisma ORM](https://www.prisma.io/)
-- [PostgreSQL](https://www.postgresql.org/)
+- [SQLite](https://www.sqlite.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Swagger (OpenAPI)](https://swagger.io/)
 
@@ -29,14 +29,7 @@ API para gerenciamento de peças de roupa e acessórios, desenvolvida em NestJS,
 
 3. **Configure o banco de dados:**
 
-   - Suba um container Postgres:
-     ```bash
-     docker run --name smi-postgres -e POSTGRES_PASSWORD=smi123 -e POSTGRES_DB=smidb -p 5432:5432 -d postgres:15
-     ```
-   - Crie um arquivo `.env` na raiz:
-     ```
-     DATABASE_URL="postgresql://postgres:smi123@localhost:5432/smidb"
-     ```
+   - Crie um arquivo `.env` na raiz, baseado no `.env example`
 
 4. **Rode as migrations do Prisma:**
 
@@ -62,8 +55,6 @@ API para gerenciamento de peças de roupa e acessórios, desenvolvida em NestJS,
 ### **Documentação**
 
 Acesse [http://localhost:3000/api](http://localhost:3000/api) para testar todos os endpoints via Swagger.
-
-**Caso deseje testar com uma grande quantidade de dados, basta importar a collection do Postman que estará incluída junto aos arquivos do projeto. Nela, você encontrará uma requisição POST para cadastro das categorias, que deve ser executada primeiro, e outra requisição POST com 250 itens para popular a tabela.**
 
 ### **Categorias**
 

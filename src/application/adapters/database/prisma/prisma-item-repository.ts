@@ -24,6 +24,28 @@ export class PrismaItemRepository extends ItemRepository {
     });
   }
 
+  async createMany(items: Item[]): Promise<Item[]> {
+    const createdItems = await this.prisma.$transaction(
+      items.map((item) =>
+        this.prisma.item.create({
+          data: {
+            sku: item.sku,
+            description: item.description,
+          },
+        }),
+      ),
+    );
+
+    return createdItems.map(
+      (item) =>
+        new Item({
+          sku: item.sku,
+          description: item.description,
+          id: item.id,
+        }),
+    );
+  }
+
   async findAll(): Promise<Item[]> {
     const items = await this.prisma.item.findMany();
 

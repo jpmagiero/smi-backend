@@ -8,7 +8,13 @@ import {
   Param,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { CreateItemDto } from '../../dtos/item/create-item.dto';
 import { UpdateItemDto } from '../../dtos/item/update-item.dto';
 import { Item } from '../../entities/item.entity';
@@ -31,24 +37,69 @@ export class ItemsController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create a new item',
-    description: 'Creates a new item with SKU and description',
+    summary: 'Create one or multiple items',
+    description: 'Creates one or multiple items with SKU and description',
+  })
+  @ApiBody({
+    schema: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            sku: { type: 'string', example: 'SKU12345' },
+            description: { type: 'string', example: 'Product description' },
+          },
+          required: ['sku', 'description'],
+        },
+        {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sku: { type: 'string', example: 'SKU12345' },
+              description: { type: 'string', example: 'Product description' },
+            },
+            required: ['sku', 'description'],
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 201,
-    description: 'Item created successfully',
+    description: 'Item(s) created successfully',
     schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'number', example: 101 },
-        sku: { type: 'string', example: 'SKU12345' },
-        description: { type: 'string', example: 'Product description' },
-      },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 101 },
+            sku: { type: 'string', example: 'SKU12345' },
+            description: { type: 'string', example: 'Product description' },
+          },
+        },
+        {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', example: 101 },
+              sku: { type: 'string', example: 'SKU12345' },
+              description: { type: 'string', example: 'Product description' },
+            },
+          },
+        },
+      ],
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request - Invalid data' })
-  @ApiResponse({ status: 409, description: 'Conflict - SKU already exists' })
-  async create(@Body() createItemDto: CreateItemDto): Promise<Item> {
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - SKU already exists or duplicate SKUs in request',
+  })
+  async create(
+    @Body() createItemDto: CreateItemDto | CreateItemDto[],
+  ): Promise<Item | Item[]> {
     return this.createItemUseCase.execute(createItemDto);
   }
 
